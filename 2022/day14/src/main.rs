@@ -90,7 +90,6 @@ impl Map {
                 location.down();
 
                 if location.is_out_of_bounds() {
-                    println!("Out of bounds at location {:?}", location);
                     break false;
                 }
             } else {
@@ -237,29 +236,28 @@ fn main() {
         });
     });
 
-    while map.produce() {
-        print!(".");
-    }
+    while map.produce() {}
 
-    println!("\nSand at rest: {}", map.count_sand());
+    println!(
+        "Sand at rest in unbounded environment: {}",
+        map.count_sand()
+    );
 
     let (min_x, max_x) = map.min_max_x();
     let (_, max_y) = map.min_max_y();
 
     map.insert_wall(Wall {
         from: Point {
-            x: min_x - 500,
+            x: min_x - 180,
             y: max_y + 2,
         },
         to: Point {
-            x: max_x + 500,
+            x: max_x + 180,
             y: max_y + 2,
         },
     });
 
-    while map.produce() {
-        print!(".");
-    }
+    while map.produce() {}
 
-    println!("\nSand at rest: {}", map.count_sand());
+    println!("Sand at rest in small cave: {}", map.count_sand());
 }
