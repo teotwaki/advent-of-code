@@ -3,14 +3,12 @@ use std::{
     io::{self, Read},
 };
 
-use nom::{
-    bytes::complete::tag,
-    character::complete::alphanumeric1,
-    sequence::{delimited, separated_pair},
-    IResult,
-};
-
 use num::integer::lcm;
+use winnow::{
+    ascii::alphanumeric1,
+    combinator::{delimited, separated_pair},
+    PResult, Parser,
+};
 
 #[derive(Debug)]
 enum Side {
@@ -60,26 +58,25 @@ impl<'a> From<&'a str> for Map<'a> {
         let parts: Vec<_> = s.split("\n\n").collect();
 
         let instructions = parts[0].chars().map(Side::from).collect();
-        let map = parts[1].lines().map(|l| line(l).unwrap().1).collect();
+        let map = parts[1]
+            .lines()
+            .map(|mut l| line(&mut l).unwrap())
+            .collect();
 
         Map { instructions, map }
     }
 }
 
-fn coords(s: &str) -> IResult<&str, &str> {
-    alphanumeric1(s)
+fn coords<'i>(s: &mut &'i str) -> PResult<&'i str> {
+    alphanumeric1.parse_next(s)
 }
 
-fn dst(s: &str) -> IResult<&str, (&str, &str)> {
-    delimited(
-        tag("("),
-        separated_pair(coords, tag(", "), coords),
-        tag(")"),
-    )(s)
+fn dst<'i>(s: &mut &'i str) -> PResult<(&'i str, &'i str)> {
+    delimited('(', separated_pair(coords, ", ", coords), ')').parse_next(s)
 }
 
-fn line(s: &str) -> IResult<&str, (&str, (&str, &str))> {
-    separated_pair(coords, tag(" = "), dst)(s)
+fn line<'i>(s: &mut &'i str) -> PResult<(&'i str, (&'i str, &'i str))> {
+    separated_pair(coords, " = ", dst).parse_next(s)
 }
 
 fn read_input() -> String {
